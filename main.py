@@ -6,6 +6,17 @@ from PyQt6.QtWidgets import (
     QLineEdit, QTextEdit,
     QInputDialog, QFormLayout
 )
+import json
+
+notes = {
+    'Інструкція':{
+        'текст':'Це додаток для важливих і неважливих записів',
+        'теги':['інструкція','вступний']
+    }
+}
+
+with open('notes_data.json', 'w') as file:
+    json.dump(notes, file, sort_keys=True)
 
 app = QApplication([])
 
@@ -68,6 +79,20 @@ layout_notes.addLayout(col_1, stretch = 2)
 layout_notes.addLayout(col_2, stretch = 1)
 
 notes_win.setLayout(layout_notes)
+#
+def show_note():
+    key = list_notes.selectedItems()[0].text()#ключ - назва обранної замітки
+
+    field_text.setText(notes[key]['текст'])
+    list_tags.clear()
+    list_tags.addItems(notes[key]['теги'])
+
+list_notes.itemClicked.connect(show_note)
+
+with open('notes_data.json', 'r') as file:
+    notes = json.load(file)
+
+list_notes.addItems(notes)
 #
 notes_win.show()
 app.exec()
