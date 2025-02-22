@@ -92,7 +92,7 @@ list_notes.itemClicked.connect(show_note)
 
 #
 def add_note():
-    note_name, ok = QInputDialog(notes_win, 'Додавання замітки', 'Введіть назву замітки:')
+    note_name, ok = QInputDialog.getText(notes_win, 'Додавання замітки', 'Введіть назву замітки:')
     if ok and note_name != '':
         notes[note_name] = {
             'текст': '',
@@ -100,7 +100,7 @@ def add_note():
         }
         list_notes.addItem(note_name)
         list_tags.addItems(notes[note_name]['теги'])
-        
+
 btn_note_create.clicked.connect(add_note)
 #
 
