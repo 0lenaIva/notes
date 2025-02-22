@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
 )
 import json
 
-notes = {
+'''notes = {
     'Інструкція':{
         'текст':'Це додаток для важливих і неважливих записів',
         'теги':['інструкція','вступний']
@@ -16,7 +16,7 @@ notes = {
 }
 
 with open('notes_data.json', 'w') as file:
-    json.dump(notes, file, sort_keys=True)
+    json.dump(notes, file, sort_keys=True)'''
 
 app = QApplication([])
 
@@ -101,6 +101,26 @@ def add_note():
         list_notes.addItem(note_name)
         list_tags.addItems(notes[note_name]['теги'])
 
+def save_note():
+    if list_notes.selectedItems():
+        key = list_notes.selectedItems()[0].text()
+        notes[key]['текст'] = field_text.toPlainText()
+        with open('notes_data.json', 'w') as file:
+            json.dump(notes, file, sort_keys=True)
+
+def del_note():
+    if list_notes.selectedItems():
+        key = list_notes.selectedItems()[0].text()
+        del notes[key]
+        list_notes.clear()
+        list_tags.clear()
+        field_text.clear()
+        list_notes.addItems(notes)
+        with open('notes_data.json', 'w') as file:
+            json.dump(notes, file, sort_keys=True)
+
+btn_note_del.clicked.connect(del_note)
+btn_note_save.clicked.connect(save_note)
 btn_note_create.clicked.connect(add_note)
 #
 
