@@ -38,7 +38,7 @@ field_text = QTextEdit()
 
 btn_tag_add = QPushButton('Додати до замітки')
 btn_tag_del = QPushButton('Відкріпити від замітки')
-btn_tag_search = QPushButton('Шукати по замітку по тегу')
+btn_tag_search = QPushButton('Шукати замітку по тегу')
 
 list_tags = QListWidget()
 list_tags_label = QLabel('Список тегів')
@@ -144,8 +144,27 @@ def del_tag():
         with open('notes_data.json', 'w') as file:
             json.dump(notes, file, sort_keys=True)
 
+def search_tag():
+    tag = field_tag.text()
+    if btn_tag_search.text() == 'Шукати замітку по тегу' and tag:
+        notes_filtered = {}
+        for note in notes:
+            if tag in notes[note]['теги']:
+                notes_filtered[note] = notes[note]
+        btn_tag_search.setText('Скинути пошук')
+        list_notes.clear()
+        list_tags.clear()
+        list_notes.addItems(notes_filtered)
+    elif btn_tag_search.text() == 'Скинути пошук':
+        field_tag.clear()
+        list_notes.clear()
+        list_tags.clear()
+        list_notes.addItems(notes)
+        btn_tag_search.setText('Шукати замітку по тегу')
+
 btn_tag_add.clicked.connect(add_tag)
 btn_tag_del.clicked.connect(del_tag)
+btn_tag_search.clicked.connect(search_tag)
 #
 
 with open('notes_data.json', 'r') as file:
