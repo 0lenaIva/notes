@@ -123,6 +123,30 @@ btn_note_del.clicked.connect(del_note)
 btn_note_save.clicked.connect(save_note)
 btn_note_create.clicked.connect(add_note)
 #
+def add_tag():
+    if list_notes.selectedItems():
+        key = list_notes.selectedItems()[0].text()
+        tag = field_tag.text()
+        if not tag in notes[key]['теги']:
+            notes[key]['теги'].append(tag)
+            list_tags.addItem(tag)
+            field_tag.clear()
+        with open('notes_data.json', 'w') as file:
+            json.dump(notes, file, sort_keys=True)
+
+def del_tag():
+    if list_notes.selectedItems():
+        key = list_notes.selectedItems()[0].text()
+        tag = list_tags.selectedItems()[0].text()
+        notes[key]['теги'].remove(tag)
+        list_tags.clear()
+        list_tags.addItems(notes[key]['теги'])
+        with open('notes_data.json', 'w') as file:
+            json.dump(notes, file, sort_keys=True)
+
+btn_tag_add.clicked.connect(add_tag)
+btn_tag_del.clicked.connect(del_tag)
+#
 
 with open('notes_data.json', 'r') as file:
     notes = json.load(file)
