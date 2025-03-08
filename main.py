@@ -4,26 +4,40 @@ from PyQt6.QtWidgets import (
     QHBoxLayout, QVBoxLayout,
     QLabel, QPushButton, QListWidget,
     QLineEdit, QTextEdit,
-    QInputDialog, QFormLayout
+    QInputDialog
 )
 import json
+import sys
+import os
+import logging
 
-'''notes = {
-    'Інструкція':{
-        'текст':'Це додаток для важливих і неважливих записів',
-        'теги':['інструкція','вступний']
-    }
-}
+# Визначення шляху до виконуваного файлу
+if getattr(sys, 'frozen', False):
+    current_path = os.path.dirname(sys.executable)  # Для PyInstaller
+else:
+    current_path = os.path.dirname(__file__)  # Для звичайного запуску
 
-with open('notes_data.json', 'w') as file:
-    json.dump(notes, file, sort_keys=True)'''
+file_path = os.path.join(current_path, 'notes_data.json')
+
+# Ініціалізація логування
+logging.basicConfig(filename='app.log', level=logging.DEBUG)
+
+# Перевірка, чи існує файл, і його відкриття
+notes = {}
+if os.path.exists(file_path):
+    try:
+        with open(file_path, 'r') as file:
+            notes = json.load(file)
+    except Exception as e:
+        logging.error(f'Error reading {file_path}: {e}')
 
 app = QApplication([])
 
 notes_win = QWidget()
 notes_win.setWindowTitle('Розумні замітки')
-notes_win.resize(900,600)
-#
+notes_win.resize(900, 600)
+
+# Створення елементів інтерфейсу
 list_notes = QListWidget()
 list_notes_label = QLabel('Список заміток')
 
@@ -42,7 +56,8 @@ btn_tag_search = QPushButton('Шукати замітку по тегу')
 
 list_tags = QListWidget()
 list_tags_label = QLabel('Список тегів')
-#
+
+# Розмітка
 layout_notes = QHBoxLayout()
 col_1 = QVBoxLayout()
 col_1.addWidget(field_text)
@@ -75,39 +90,38 @@ row_4.addWidget(btn_tag_search)
 col_2.addLayout(row_3)
 col_2.addLayout(row_4)
 
-layout_notes.addLayout(col_1, stretch = 2)
-layout_notes.addLayout(col_2, stretch = 1)
+layout_notes.addLayout(col_1, stretch=2)
+layout_notes.addLayout(col_2, stretch=1)
 
 notes_win.setLayout(layout_notes)
-#
-def show_note():
-    key = list_notes.selectedItems()[0].text()#ключ - назва обранної замітки
 
-    field_text.setText(notes[key]['текст'])
-    list_tags.clear()
-    list_tags.addItems(notes[key]['теги'])
+# Функція для показу замітки
+def show_note():
+    if list_notes.selectedItems():
+        key = list_notes.selectedItems()[0].text()
+        field_text.setText(notes[key]['текст'])
+        list_tags.clear()
+        list_tags.addItems(notes[key]['теги'])
 
 list_notes.itemClicked.connect(show_note)
 
-
-#
+# Функція для додавання замітки
 def add_note():
     note_name, ok = QInputDialog.getText(notes_win, 'Додавання замітки', 'Введіть назву замітки:')
     if ok and note_name != '':
-        notes[note_name] = {
-            'текст': '',
-            'теги': []
-        }
+        notes[note_name] = {'текст': '', 'теги': []}
         list_notes.addItem(note_name)
         list_tags.addItems(notes[note_name]['теги'])
 
+# Функція для збереження замітки
 def save_note():
     if list_notes.selectedItems():
         key = list_notes.selectedItems()[0].text()
         notes[key]['текст'] = field_text.toPlainText()
-        with open('notes_data.json', 'w') as file:
+        with open(file_path, 'w') as file:
             json.dump(notes, file, sort_keys=True)
 
+# Функція для видалення замітки
 def del_note():
     if list_notes.selectedItems():
         key = list_notes.selectedItems()[0].text()
@@ -116,61 +130,57 @@ def del_note():
         list_tags.clear()
         field_text.clear()
         list_notes.addItems(notes)
-        with open('notes_data.json', 'w') as file:
+        with open(file_path, 'w') as file:
             json.dump(notes, file, sort_keys=True)
 
-btn_note_del.clicked.connect(del_note)
-btn_note_save.clicked.connect(save_note)
-btn_note_create.clicked.connect(add_note)
-#
+# Функція для додавання тега
 def add_tag():
     if list_notes.selectedItems():
         key = list_notes.selectedItems()[0].text()
         tag = field_tag.text()
-        if not tag in notes[key]['теги']:
+        if tag and tag not in notes[key]['теги']:
             notes[key]['теги'].append(tag)
             list_tags.addItem(tag)
             field_tag.clear()
-        with open('notes_data.json', 'w') as file:
-            json.dump(notes, file, sort_keys=True)
+            with open(file_path, 'w') as file:
+                json.dump(notes, file, sort_keys=True)
 
+# Функція для видалення тега
 def del_tag():
     if list_notes.selectedItems():
         key = list_notes.selectedItems()[0].text()
         tag = list_tags.selectedItems()[0].text()
-        notes[key]['теги'].remove(tag)
-        list_tags.clear()
-        list_tags.addItems(notes[key]['теги'])
-        with open('notes_data.json', 'w') as file:
-            json.dump(notes, file, sort_keys=True)
+        if tag in notes[key]['теги']:
+            notes[key]['теги'].remove(tag)
+            list_tags.clear()
+            list_tags.addItems(notes[key]['теги'])
+            with open(file_path, 'w') as file:
+                json.dump(notes, file, sort_keys=True)
 
+# Пошук тега
 def search_tag():
     tag = field_tag.text()
-    if btn_tag_search.text() == 'Шукати замітку по тегу' and tag:
-        notes_filtered = {}
-        for note in notes:
-            if tag in notes[note]['теги']:
-                notes_filtered[note] = notes[note]
-        btn_tag_search.setText('Скинути пошук')
+    if tag:
+        notes_filtered = {note: data for note, data in notes.items() if tag in data['теги']}
         list_notes.clear()
         list_tags.clear()
         list_notes.addItems(notes_filtered)
-    elif btn_tag_search.text() == 'Скинути пошук':
-        field_tag.clear()
+    else:
         list_notes.clear()
         list_tags.clear()
         list_notes.addItems(notes)
-        btn_tag_search.setText('Шукати замітку по тегу')
 
+# Підключення кнопок до функцій
+btn_note_del.clicked.connect(del_note)
+btn_note_save.clicked.connect(save_note)
+btn_note_create.clicked.connect(add_note)
 btn_tag_add.clicked.connect(add_tag)
 btn_tag_del.clicked.connect(del_tag)
 btn_tag_search.clicked.connect(search_tag)
-#
 
-with open('notes_data.json', 'r') as file:
-    notes = json.load(file)
-
+# Завантаження заміток в список
 list_notes.addItems(notes)
-#
+
+# Показ вікна
 notes_win.show()
 app.exec()
